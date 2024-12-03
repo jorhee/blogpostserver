@@ -153,6 +153,56 @@ module.exports.getBlogById = async (req, res) => {
 };
 
 
+module.exports.editBlogById = async (req, res) => {
+
+try {
+        // Extract user ID from the authenticated user
+        const userId = req.user.id;
+
+        // Extract blog ID and new content from the request parameters and body
+        const { blogId } = req.params;
+        const { title, content, picture } = req.body;
+
+        // Validate the blog ID format
+        if (!mongoose.isValidObjectId(blogId)) {
+            return res.status(400).json({ message: 'Invalid blog ID format.' });
+        }
+
+        // Find the blog by ID
+        const blog = await Blog.findById(blogId);
+        if (!blog) {
+            return res.status(404).json({ message: 'Blog not found.' });
+        }
+
+        // Check if the user is the author of the blog
+        if (blog.author.userId.toString() !== userId) {
+            return res.status(403).json({ message: 'You are not authorized to edit this blog.' });
+        }
+
+        // Update blog details
+        blog.title = title || blog.title; // If title is provided, update it
+        blog.content = content || blog.content; // If content is provided, update it
+        if (picture) {
+            blog.picture = picture; // If a new picture is provided, update it
+        }
+
+        // Save the updated blog
+        await blog.save();
+
+        // Respond with the updated blog
+        res.status(200).json({
+            message: 'Blog updated successfully.',
+            updatedBlog: blog,
+        });
+    } catch (error) {
+        // Log the error and send a server error response
+        console.error("Error editing blog:", error);
+        res.status(500).json({
+            message: 'Error editing blog.',
+            error: error.message,
+        });
+    }
+};
 
 module.exports.addComment = async (req, res) => {
     try {
