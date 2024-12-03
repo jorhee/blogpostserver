@@ -1,5 +1,0 @@
-Notes:
-
-- no .env
-- dont push node_modules
-- put hosted API in json file

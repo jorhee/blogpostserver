@@ -2,10 +2,9 @@ const mongoose = require('mongoose');
 
 const commentSchema = new mongoose.Schema({
     _id: mongoose.Schema.Types.ObjectId, // Unique identifier for each comment
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Reference to the User model
-        required: [true, 'User ID is required']
+    userName: {
+        type: String,
+        required: [true, 'UserName is required']
     },
     text: {
         type: String,
@@ -20,25 +19,32 @@ const commentSchema = new mongoose.Schema({
 const blogSchema = new mongoose.Schema({
     title: {
         type: String,
-        required: [true, 'Title is Required']
+        required: [true, 'Title is Required'],
     },
     content: {
         type: String,
-        required: [true, 'Content is Required']
+        required: [true, 'Content is Required'],
     },
     author: {
-        type: String,
-        required: [true, 'Author is Required']
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+        },
+        userName: {
+            type: String,
+            required: [true, 'Author user name is required'],
+        },
     },
     picture: {
-    type: String, // A single string to store the path or filename of the image
-    default: null
+        type: String, // A single string to store the path or filename of the image
+        default: null,
     },
     creationDate: {
         type: Date,
         default: Date.now, // Automatically set the creation date to the current date/time
     },
-    comments: [commentSchema] // Array of comment objects
+    comments: [commentSchema], // Array of comment objects
 });
 
 module.exports = mongoose.model('Blog', blogSchema);

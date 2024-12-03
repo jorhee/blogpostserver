@@ -14,50 +14,58 @@ const {errorHandler} = require("../auth");
 
 
 module.exports.registerUser = async (req, res) => {
-
     try {
-        // Checks if the email is in the right format
-        if (!req.body.email.includes("@")) {
-            // if the email is not in the right format, send a message 'Invalid email format'.
-            return res.status(400).send({ message: 'Invalid email format' });
+        const { email, password, userName } = req.body;
+
+        // Validate email format
+        if (!email || !email.includes("@")) {
+            return res.status(400).send({ message: 'Invalid email format.' });
         }
 
-        // Checks if the password has atleast 8 characters
-        if (req.body.password.length < 8) {
-            // If the password is not atleast 8 characters, send a message 'Password must be atleast 8 characters long'.
-            return res.status(400).send({ message: 'Password must be atleast 8 characters long' });
+        // Validate password length
+        if (!password || password.length < 8) {
+            return res.status(400).send({ message: 'Password must be at least 8 characters long.' });
+        }
+
+        // Validate userName presence
+        if (!userName || userName.trim().length === 0) {
+            return res.status(400).send({ message: 'User name is required.' });
         }
 
         // Check if the email already exists in the database
-        const existingUser = await User.findOne({ email: req.body.email });
-
-        if (existingUser) {
-            // If the email already exists, send a message 'Email already exists'
-            return res.status(400).send({ message: 'Email already exists' });
+        const existingEmail = await User.findOne({ email });
+        if (existingEmail) {
+            return res.status(400).send({ message: 'Email already exists.' });
         }
 
-        // If the email does not exist, create a new user
-        const hashedPassword = await bcrypt.hash(req.body.password, 10);  // Hash the password
+        // Check if the userName already exists in the database
+        const existingUserName = await User.findOne({ userName: userName.trim() });
+        if (existingUserName) {
+            return res.status(400).send({ message: 'User name already exists.' });
+        }
 
-        let newUser = new User({
-            email: req.body.email,
-            isAdmin: req.body.isAdmin,
-            password: hashedPassword,
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create a new user
+        const newUser = new User({
+            email,
+            userName: userName.trim(),
+            password: hashedPassword, // Store hashed password
         });
 
         // Save the new user to the database
         await newUser.save();
 
-        // Send a success message 'User registered successfully'
-        return res.status(201).send({
-            message: 'Registered successfully'
-        });
-
+        // Send a success message
+        return res.status(201).send({ message: 'Registered successfully.' });
     } catch (error) {
-        // Handle any errors that occur during the process
-        return errorHandler(error, req, res);
+        // Handle errors
+        console.error('Error registering user:', error);
+        return res.status(500).send({ message: 'Error registering user.', error: error.message });
     }
 };
+
 
 //[SECTION] User authentication
 module.exports.loginUser = (req, res) => {
@@ -95,25 +103,19 @@ module.exports.loginUser = (req, res) => {
 
 module.exports.getProfile = (req, res) => {
     return User.findById(req.user.id)
-    .then(user => {
-
-        if(!user){
-            // if the user has invalid token, send a message 'invalid signature'.
-            return res.status(403).send({ message: 'invalid signature' })
-        }else {
-            // if the user is found, return the user.
-            user.password = "";
-            return res.status(200).send({
-                user: {
-                    _id: user._id,
-                    email: user.email,
-                    isAdmin: user.isAdmin,
-                    __v: user.__v // Include the __v field
-                }
-            });
-        }  
-    })
-    .catch(error => errorHandler(error, req, res));
+        .select('-password') // Exclude the password field from the response
+        .then(user => {
+            if (!user) {
+                // if the user is not found, send an 'invalid signature' message
+                return res.status(403).send({ message: 'Invalid signature' });
+            } else {
+                // if the user is found, return the user object without the password
+                return res.status(200).send({
+                    user: user
+                });
+            }
+        })
+        .catch(error => errorHandler(error, req, res));
 };
 
 

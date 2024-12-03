@@ -7,7 +7,7 @@ const router = express.Router();
 
 
 
-router.post("/addBlog", verify, verifyAdmin, isLoggedIn, blogController.addBlog);
+router.post("/addBlog", verify, isLoggedIn, blogController.addBlog);
 
 router.get("/getBlogPost", blogController.viewAllBlogPost);
 
@@ -17,9 +17,9 @@ router.patch("/addComment/:blogId", verify, isLoggedIn, blogController.addCommen
 
 router.get("/getComments/:blogId", blogController.getComments);
 
-router.delete("/deleteBlog/:blogId", verify, verifyAdmin, isLoggedIn, blogController.deleteBlog);
+router.delete("/deleteBlog/:blogId", verify, isLoggedIn, blogController.deleteBlog);
 
-router.patch("/removeComment/:blogId/:commentId", verify, verifyAdmin, isLoggedIn, blogController.removeComment);
+router.patch("/removeComment/:blogId", verify, isLoggedIn, blogController.removeComment);
 
 
 

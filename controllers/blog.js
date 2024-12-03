@@ -39,26 +39,26 @@ const upload = multer({
 });
 
 
-module.exports.addBlog = async (req, res) => {
+module.exports.addBlog = async (req, res) => { 
     try {
-        // Extract userId from the authenticated user
+        // Extract userId and userName from the authenticated user
         const userId = req.user.id;
+        const userName = req.user.userName; // Assuming userName is stored in the authenticated user's data
 
-        // Fetch user details to validate admin status
-        const user = await User.findById(userId);
-        if (!user || !user.isAdmin) {
-            return res.status(403).json({
-                message: 'Access denied. Admin privileges are required.',
+        // Extract blog details from the request body
+        const { title, content, picture } = req.body;
+
+        // Validate required fields
+        if (!title || !content) {
+            return res.status(400).json({
+                message: 'Title and Content are required.',
             });
         }
 
-        // Extract blog details from the request body
-        const { title, content, author, picture } = req.body;
-
-        // Validate required fields
-        if (!title || !content || !author) {
+        // Ensure userName and userId are provided
+        if (!userName || !userId) {
             return res.status(400).json({
-                message: 'Title, Content, and Author are required.',
+                message: 'User information is missing. Ensure you are authenticated properly.',
             });
         }
 
@@ -69,11 +69,14 @@ module.exports.addBlog = async (req, res) => {
             picturePath = path.join('uploads', req.file.filename);
         }
 
-        // Create a new blog instance
+        // Create a new blog instance with the authenticated user's info as the author
         const newBlog = new Blog({
             title,
             content,
-            author,
+            author: {
+                userId,      // Reference to the authenticated user's ID
+                userName,    // Reference to the authenticated user's name
+            },
             picture: picturePath, // Save picture path if available
         });
 
@@ -155,6 +158,7 @@ module.exports.addComment = async (req, res) => {
     try {
         // Get the authenticated user's ID
         const userId = req.user.id;
+        const userName = req.user.userName;
 
         // Extract blog ID from the request parameters
         const { blogId } = req.params;
@@ -187,7 +191,7 @@ module.exports.addComment = async (req, res) => {
         // Create the comment object, with userId and text
         const comment = {
             _id: new mongoose.Types.ObjectId(), // Generate a new ObjectId for the comment
-            userId,                            // Link the user who made the comment
+            userName,                            // Link the user who made the comment
             text,                              // The comment text
         };
 
@@ -247,59 +251,60 @@ module.exports.getComments = async (req, res) => {
 
 module.exports.removeComment = async (req, res) => {
     try {
-        // Get the authenticated user's ID
+        // Extract user ID from authenticated user
         const userId = req.user.id;
+        const userName = req.user.userName;
 
-        // Extract blog ID and comment ID from the request parameters
-        const { blogId, commentId } = req.params;
+        // Extract blog ID from request parameters and comment ID from request body
+        const { blogId } = req.params;
+        const { commentId } = req.body;
 
-        // Validate blogId format
+        // Validate the blog ID and comment ID format
         if (!mongoose.isValidObjectId(blogId)) {
-            return res.status(400).json({
-                message: 'Invalid blog ID format.',
-            });
+            return res.status(400).json({ message: 'Invalid blog ID format.' });
         }
-
-        // Validate commentId format
         if (!mongoose.isValidObjectId(commentId)) {
-            return res.status(400).json({
-                message: 'Invalid comment ID format.',
-            });
+            return res.status(400).json({ message: 'Invalid comment ID format.' });
         }
 
-        // Find the blog post to ensure it exists
+        // Find the blog by ID
         const blog = await Blog.findById(blogId);
         if (!blog) {
-            return res.status(404).json({
-                message: 'Blog not found.',
-            });
+            return res.status(404).json({ message: 'Blog not found.' });
         }
 
-        // Find the comment in the blog post by matching the comment's _id
-        const comment = blog.comments.find((comment) => comment._id === commentId);
-        if (!comment) {
-            return res.status(404).json({
-                message: 'Comment not found.',
-            });
+        // Find the index of the comment
+        const commentIndex = blog.comments.findIndex(comment => comment._id.toString() === commentId);
+        if (commentIndex === -1) {
+            return res.status(404).json({ message: 'Comment not found.' });
         }
 
-        // Check if the comment belongs to the authenticated user or if the user is an admin
-        if (comment.userId.toString() !== userId && !req.user.isAdmin) {
-            return res.status(403).json({
-                message: 'You are not authorized to delete this comment.',
-            });
+        // Get the comment to check ownership
+        const comment = blog.comments[commentIndex];
+
+        // Check if user is admin
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(403).json({ message: 'User not found.' });
         }
 
-        // Remove the comment from the blog's comments array
-        blog.comments = blog.comments.filter((comment) => comment._id !== commentId);
+        const isAdmin = user.isAdmin;
+
+        // Allow removal if the user is admin or the owner of the comment
+        if (!isAdmin && comment.userName !== userName) {
+            return res.status(403).json({ message: 'You are not authorized to remove this comment.' });
+        }
+
+        // Remove the comment
+        blog.comments.splice(commentIndex, 1);
 
         // Save the updated blog
-        const updatedBlog = await blog.save();
+        await blog.save();
 
-        // Respond with the updated blog after removing the comment
+        // Respond with success
         res.status(200).json({
             message: 'Comment removed successfully.',
-            updatedBlog: updatedBlog,
+            updatedBlog: blog,
         });
     } catch (error) {
         console.error("Error removing comment:", error);
@@ -313,28 +318,39 @@ module.exports.removeComment = async (req, res) => {
 
 
 
-
 module.exports.deleteBlog = async (req, res) => {
     try {
-        // Check if the user has admin privileges
-        if (!req.user || !req.user.isAdmin) {
-            return res.status(403).json({
-                message: 'Access denied. Admin privileges are required.',
-            });
-        }
+
+        // Extract user ID from authenticated user
+        const userId = req.user.id;
+        const userName = req.user.userName;
 
         // Extract blog ID from the request parameters
         const { blogId } = req.params;
 
-        // Find and delete the blog
-        const deletedBlog = await Blog.findByIdAndDelete(blogId);
-
-        // Check if the blog exists
-        if (!deletedBlog) {
-            return res.status(404).json({
-                message: 'Blog not found.',
-            });
+        // Validate the blog ID and comment ID format
+        if (!mongoose.isValidObjectId(blogId)) {
+            return res.status(400).json({ message: 'Invalid blog ID format.' });
         }
+
+
+        // Find the blog by ID
+        const blog = await Blog.findById(blogId);
+        if (!blog) {
+            return res.status(404).json({ message: 'Blog not found.' });
+        }
+
+        // Check if the user is admin or the owner of the blog
+        const isAdmin = req.user.isAdmin;
+
+
+        // If the user is not an admin, they can only delete their own blog
+        if (!isAdmin && blog.author.userId.toString() !== userId) {
+            return res.status(403).json({ message: 'You are not authorized to delete this blog.' });
+        }
+
+        // Remove the blog
+        await blog.remove();
 
         // Respond with a success message
         res.status(200).json({
@@ -344,7 +360,7 @@ module.exports.deleteBlog = async (req, res) => {
         // Log the error and send a server error response
         console.error("Error deleting blog:", error);
         res.status(500).json({
-            message: 'Error deleting Blog.',
+            message: 'Error deleting blog.',
             error: error.message,
         });
     }
