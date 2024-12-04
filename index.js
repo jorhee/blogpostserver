@@ -35,7 +35,16 @@ app.use(express.urlencoded({extended:true}));
 };
 app.use(cors(corsOptions));
 */
-app.use(cors());
+//app.use(cors());
+
+// Allow only requests from your React app (localhost:3000)
+app.use(cors({
+  origin: "http://localhost:3000",  // Update with your frontend's URL
+  methods: ["GET", "POST", "PUT", "DELETE"], // Allow only the methods you need
+  allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers if necessary
+}));
+
+
 //[Database Connection]
 //Connect to our MongoDB
 mongoose.connect("mongodb+srv://admin:admin123@wdc028-b461.ik3ub.mongodb.net/blogApp?retryWrites=true&w=majority&appName=WDC028-B461");
