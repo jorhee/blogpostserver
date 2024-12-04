@@ -26,24 +26,15 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));   
 
-//will allow s to customize CORS options to meet our specific requirements
-/*const corsOptions = {
-    origin: [`http://localhost:3000`], //allows request from this origin (client's URL)
-    //methods: ['GET','POST'],
-    credentials: true, //allow credentials (e.g. authorization headers)
-    optionsSuccessStatus:200 //provides status code to use for successful OPTIONS requests
+const corsOptions = {
+  origin: [
+    'http://localhost:3000', // Local development
+  ],
+  credentials: true, // Allow credentials (e.g., cookies or headers)
+  optionsSuccessStatus: 200, // Status code for successful OPTIONS request
 };
+
 app.use(cors(corsOptions));
-*/
-//app.use(cors());
-
-// Allow only requests from your React app (localhost:3000)
-app.use(cors({
-  origin: "http://localhost:3000",  // Update with your frontend's URL
-  methods: ["GET", "POST", "PUT", "DELETE"], // Allow only the methods you need
-  allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers if necessary
-}));
-
 
 //[Database Connection]
 //Connect to our MongoDB
