@@ -35,6 +35,10 @@ const blogSchema = new mongoose.Schema({
             type: String,
             required: [true, 'Author user name is required'],
         },
+        profilePicture: {
+        type: String, // A single string to store the path or filename of the image
+        default: null,
+        },
     },
     picture: {
         type: String, // A single string to store the path or filename of the image

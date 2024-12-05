@@ -13,7 +13,7 @@ router.get("/getBlogPost", blogController.viewAllBlogPost);
 
 router.get("/getBlog/:blogId", blogController.getBlogById);
 
-router.patch("/editBlog/:blogId", verify, isLoggedIn, blogController.editBlogById);
+router.put("/editBlog/:blogId", verify, isLoggedIn, blogController.editBlogById);
 
 router.patch("/addComment/:blogId", verify, isLoggedIn, blogController.addComment);
 

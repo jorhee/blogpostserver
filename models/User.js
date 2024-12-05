@@ -11,6 +11,10 @@ const userSchema = new mongoose.Schema({
             type: String,
             required: [true, 'Author first name is required'],
         },
+    profilePicture: {
+        type: String, // A single string to store the path or filename of the image
+        default: null,
+    },
     password: {
         type: String,
         required: [true, 'Password is Required']
