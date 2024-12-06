@@ -410,6 +410,20 @@ module.exports.addReplyToComment = async (req, res) => {
             return res.status(400).json({ message: 'Reply text is required.' });
         }
 
+        // Validate blogId format
+        if (!mongoose.isValidObjectId(blogId)) {
+            return res.status(400).json({
+                message: 'Invalid blog ID format.',
+            });
+        }
+
+        // Validate commentId format
+        if (!mongoose.isValidObjectId(commentId)) {
+            return res.status(400).json({
+                message: 'Invalid comment ID format.',
+            });
+        }
+        
         // Find the blog by ID
         const blog = await Blog.findById(blogId);
         if (!blog) {
@@ -422,11 +436,15 @@ module.exports.addReplyToComment = async (req, res) => {
             return res.status(404).json({ message: 'Comment not found.' });
         }
 
+        // Ensure the replies array exists on the comment
+        if (!comment.replies) {
+            comment.replies = []; // Initialize replies if it doesn't exist
+        }
+
         // Create a new reply object
         const newReply = {
             userName: userName, // User's name (from authenticated user)
             text: text, // Reply content
-            creationDate: new Date(), // Current timestamp
         };
 
         // Push the new reply to the comment's replies array
