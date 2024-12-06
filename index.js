@@ -29,6 +29,7 @@ app.use(express.urlencoded({extended:true}));
 const corsOptions = {
   origin: [
     'http://localhost:3000', // Local development
+    'https://blogapp-client-six.vercel.app'
   ],
   credentials: true, // Allow credentials (e.g., cookies or headers)
   optionsSuccessStatus: 200, // Status code for successful OPTIONS request
