@@ -400,7 +400,7 @@ module.exports.deleteBlog = async (req, res) => {
         }
 
         // Remove the blog
-        await blog.remove();
+        await Blog.findByIdAndDelete(blogId);
 
         // Respond with a success message
         res.status(200).json({
