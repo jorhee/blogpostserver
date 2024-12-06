@@ -268,7 +268,7 @@ module.exports.addComment = async (req, res) => {
 
 
 
-module.exports.getComments = async (req, res) => {
+module.exports.getAllComments = async (req, res) => {
     try {
         // Extract blog ID from the request parameters
         const { blogId } = req.params;
@@ -298,6 +298,38 @@ module.exports.getComments = async (req, res) => {
 };
 
 
+module.exports.getSingleComment = async (req, res) => {
+
+    try {
+        const { blogId, commentId } = req.params; // Extract blogId and commentId from request params
+
+        // Find the blog by ID
+        const blog = await Blog.findById(blogId);
+        if (!blog) {
+            return res.status(404).json({ message: 'Blog not found.' });
+        }
+
+        // Find the comment by ID within the blog's comments array
+        const comment = blog.comments.id(commentId);
+        if (!comment) {
+            return res.status(404).json({ message: 'Comment not found.' });
+        }
+
+        // Respond with the found comment
+        res.status(200).json({
+            message: 'Comment retrieved successfully.',
+            comment: comment,
+        });
+    } catch (error) {
+        console.error('Error retrieving comment:', error);
+        res.status(500).json({
+            message: 'An error occurred while retrieving the comment.',
+            error: error.message,
+        });
+    }
+
+}
+
 
 module.exports.removeComment = async (req, res) => {
     try {
@@ -307,7 +339,7 @@ module.exports.removeComment = async (req, res) => {
 
         // Extract blog ID from request parameters and comment ID from request body
         const { blogId } = req.params;
-        const { commentId } = req.body;
+        const { commentId } = req.params;
 
         // Validate the blog ID and comment ID format
         if (!mongoose.isValidObjectId(blogId)) {
@@ -366,7 +398,57 @@ module.exports.removeComment = async (req, res) => {
 };
 
 
+module.exports.addReplyToComment = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const userName = req.user.userName;
+        const { blogId, commentId } = req.params; // Extract blogId and commentId from request parameters
+        const { text } = req.body; // Extract the reply text from the request body
 
+        // Validate that the reply text is provided
+        if (!text) {
+            return res.status(400).json({ message: 'Reply text is required.' });
+        }
+
+        // Find the blog by ID
+        const blog = await Blog.findById(blogId);
+        if (!blog) {
+            return res.status(404).json({ message: 'Blog not found.' });
+        }
+
+        // Find the comment by ID
+        const comment = blog.comments.id(commentId);
+        if (!comment) {
+            return res.status(404).json({ message: 'Comment not found.' });
+        }
+
+        // Create a new reply object
+        const newReply = {
+            userName: userName, // User's name (from authenticated user)
+            text: text, // Reply content
+            creationDate: new Date(), // Current timestamp
+        };
+
+        // Push the new reply to the comment's replies array
+        comment.replies.push(newReply);
+
+        // Save the updated blog with the new reply
+        await blog.save();
+
+        // Respond with a success message and the updated blog
+        res.status(200).json({
+            message: 'Reply added successfully.',
+            blog: blog // Return the updated blog with the new reply
+        });
+
+    } catch (error) {
+        console.error('Error adding reply to comment:', error);
+        res.status(500).json({
+            message: 'An error occurred while adding the reply.',
+            error: error.message,
+        });
+    }
+};
 
 module.exports.deleteBlog = async (req, res) => {
     try {
