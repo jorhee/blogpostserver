@@ -64,9 +64,16 @@ module.exports.addBlog = async (req, res) => {
 
         // Initialize picture path (default to null if not provided)
         let picturePath = null;
+            
+        // Check if a file was uploaded
         if (req.file) {
+            // Debugging: Log the uploaded file information
+            console.log('Uploaded file:', req.file);
             // If a picture file is uploaded, save its path
             picturePath = path.join('uploads', req.file.filename);
+        } else {
+            // Debugging: Log if no file is found
+            console.log('No file uploaded or req.file is undefined.');
         }
 
         // Create a new blog instance with the authenticated user's info as the author
@@ -86,7 +93,7 @@ module.exports.addBlog = async (req, res) => {
         // Respond with the saved blog post
         res.status(201).json(savedBlog);
     } catch (error) {
-        console.error(error); // Log the error for debugging
+        console.error('Error in addBlog controller:', error); // Log the error for debugging
         errorHandler(error, req, res);
     }
 };
