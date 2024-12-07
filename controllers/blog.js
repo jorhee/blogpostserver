@@ -69,6 +69,9 @@ module.exports.addBlog = async (req, res) => {
         if (req.file) {
             // Debugging: Log the uploaded file information
             console.log('Uploaded file:', req.file);
+            // Additional debug information
+            console.log('Request Body:', req.body);
+            console.log('File Path:', req.file.path);
             // If a picture file is uploaded, save its path
             picturePath = path.join('uploads', req.file.filename);
         } else {

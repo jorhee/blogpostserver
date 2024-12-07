@@ -7,7 +7,7 @@ const router = express.Router();
 
 
 
-router.post("/addBlog", verify, isLoggedIn, blogController.addBlog);
+router.post("/addBlog", verify, isLoggedIn, blogController.uploadMiddleware, blogController.addBlog);
 
 router.get("/getBlogPost", blogController.viewAllBlogPost);
 
