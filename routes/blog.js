@@ -28,6 +28,8 @@ router.delete("/deleteBlog/:blogId", verify, isLoggedIn, blogController.deleteBl
 
 router.patch("/removeComment/:blogId/:commentId", verify, isLoggedIn, blogController.removeComment);
 
+router.patch("/likeBlog/:blogId/", verify, isLoggedIn, blogController.likeBlog);
+
 
 
 
