@@ -68,6 +68,9 @@ const blogSchema = new mongoose.Schema({
         default: Date.now, // Automatically set the creation date to the current date/time
     },
     comments: [commentSchema], // Array of comment objects, now with replies
+    likes: [{ 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User' }]
 });
 
 module.exports = mongoose.model('Blog', blogSchema);
