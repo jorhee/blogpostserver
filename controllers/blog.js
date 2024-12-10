@@ -531,7 +531,7 @@ module.exports.likeBlog = async (req, res) => {
     try {
 
     const { blogId } = req.params;
-    const { userId } = req.user.id; // Assuming you have authentication middleware
+    const userId = req.user.id; 
 
 
     if (!userId ) {
