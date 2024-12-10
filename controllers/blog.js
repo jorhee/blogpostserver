@@ -534,13 +534,18 @@ module.exports.likeBlog = async (req, res) => {
     const { userId } = req.user.id; // Assuming you have authentication middleware
 
 
-    if (!req.user.id ) {
+    if (!userId ) {
       return res.status(400).json({ message: 'Invalid user ID' });
     }
 
     const blog = await Blog.findById(blogId);
     if (!blog) {
       return res.status(404).json({ message: 'Blog not found' });
+    }
+
+    // Initialize likes as an empty array if it's null (for older records)
+    if (!blog.likes) {
+      blog.likes = [];
     }
 
     // Check if the user has already liked the post
