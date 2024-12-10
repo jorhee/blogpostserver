@@ -531,13 +531,13 @@ module.exports.likeBlog = async (req, res) => {
     try {
 
     const { blogId } = req.params;
-    const { userId } = req.user; // Assuming you have authentication middleware
+    const { userId } = req.user.id; // Assuming you have authentication middleware
 
 
-    if (!req.user || !req.user.userId) {
+    if (!req.user.id ) {
       return res.status(400).json({ message: 'Invalid user ID' });
     }
-    
+
     const blog = await Blog.findById(blogId);
     if (!blog) {
       return res.status(404).json({ message: 'Blog not found' });
