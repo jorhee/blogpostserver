@@ -528,27 +528,33 @@ module.exports.deleteBlog = async (req, res) => {
 
 module.exports.likeBlog = async (req, res) => {
 
+    try {
+
     const { blogId } = req.params;
     const { userId } = req.user; // Assuming you have authentication middleware
 
-    try {
-        const blog = await Blog.findById(blogId);
-        if (!blog) {
-          return res.status(404).json({ message: 'Blog not found' });
-        }
 
-        // Check if the user has already liked the post
-        if (blog.likes.includes(userId)) {
-          return res.status(400).json({ message: 'You already liked this post' });
-        }
+    if (!req.user || !req.user.userId) {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
+    
+    const blog = await Blog.findById(blogId);
+    if (!blog) {
+      return res.status(404).json({ message: 'Blog not found' });
+    }
 
-        // Add user to the likes array
-        blog.likes.push(userId);
-        await blog.save();
+    // Check if the user has already liked the post
+    if (blog.likes.includes(userId)) {
+      return res.status(400).json({ message: 'You already liked this post' });
+    }
 
-        res.json({ updatedBlog: blog });
-      } catch (err) {
-        res.status(500).json({ message: 'An error occurred', error: err.message });
-      }
+    // Add user to the likes array
+    blog.likes.push(userId);
+    await blog.save();
+
+    res.json({ updatedBlog: blog });
+  } catch (err) {
+    res.status(500).json({ message: 'An error occurred', error: err.message });
+  }
 
 };
